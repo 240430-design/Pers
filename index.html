@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Монитор группы — Статусы участников</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0f2f8 0%, #e6ecf4 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* главная карточка */
+        .app-container {
+            max-width: 700px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(2px);
+            border-radius: 48px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 5px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* шапка профиля */
+        .profile-card {
+            background: white;
+            padding: 24px 28px;
+            border-bottom: 1px solid #eef2f6;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .profile-header h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e2b3c, #2c4c6c);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .my-badge {
+            background: #eef3fc;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #1f6392;
+            box-shadow: inset 0 0 0 1px rgba(79, 158, 212, 0.2);
+        }
+
+        #myInfo {
+            font-weight: 600;
+            background: #f8fafd;
+            padding: 12px 18px;
+            border-radius: 28px;
+            font-size: 1rem;
+            color: #1e4663;
+            border: 1px solid #dce5ef;
+            margin-bottom: 20px;
+            word-break: break-word;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        /* сетка кнопок статусов */
+        .status-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 16px 0 8px;
+        }
+
+        .status-btn {
+            flex: 1 0 auto;
+            background: #f8fafc;
+            border: none;
+            padding: 12px 8px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+            color: #2c3e4e;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04), inset 0 0 0 1px #e2e8f0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .status-btn i {
+            font-style: normal;
+            font-size: 1.1rem;
+        }
+
+        .status-btn:hover {
+            transform: translateY(-2px);
+            background: white;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.08), inset 0 0 0 1px #cbdde9;
+        }
+
+        .status-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* кнопки с цветовой темой */
+        .btn-study { background: #e9f3fa; color: #1e6f9f; border-left: 3px solid #3b82f6; }
+        .btn-coffee { background: #f7efe3; color: #b45f2b; border-left: 3px solid #d97706; }
+        .btn-game { background: #ede7f6; color: #6b3fa0; border-left: 3px solid #8b5cf6; }
+        .btn-home { background: #e6f4ea; color: #2c6e3c; border-left: 3px solid #2ecc71; }
+
+        /* монитор группы */
+        .group-section {
+            padding: 16px 28px 28px 28px;
+        }
+
+        .group-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 1.3rem;
+            color: #1e2f3c;
+        }
+
+        .group-title span {
+            background: #d4e2f0;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: normal;
+        }
+
+        /* список участников */
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 460px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .user-item {
+            background: white;
+            border-radius: 28px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03), 0 0 0 1px #e9edf2;
+            transition: all 0.2s;
+            backdrop-filter: blur(2px);
+        }
+
+        .user-item:hover {
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 0 0 1px #cfdeec;
+            transform: scale(1.01);
+        }
+
+        .status-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 14px;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 2px white, 0 0 0 3px rgba(0,0,0,0.05);
+        }
+
+        .user-info {
+            flex-grow: 1;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #1f2f3e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .user-status-text {
+            font-size: 0.8rem;
+            color: #5c6f87;
+            background: #f0f4fa;
+            padding: 4px 12px;
+            border-radius: 30px;
+            display: inline-block;
+            margin-top: 6px;
+            word-break: break-word;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8f9eb2;
+            background: #f8fafd;
+            border-radius: 48px;
+            font-weight: 500;
+        }
+
+        .footer-note {
+            font-size: 0.7rem;
+            text-align: center;
+            padding: 16px 20px 20px;
+            color: #7d8faa;
+            border-top: 1px solid #eef2f8;
+            background: white;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #b9c8e0;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Мой профиль -->
+    <div class="profile-card">
+        <div class="profile-header">
+            <h2>👤 Мой профиль</h2>
+            <div class="my-badge">online</div>
+        </div>
+        <div id="myInfo">⏳ Загрузка данных...</div>
+
+        <div style="font-weight: 500; margin: 8px 0 6px 0; font-size: 0.85rem; color: #3e5a74;">✨ Выберите статус</div>
+        <div class="status-grid">
+            <button class="status-btn btn-study" id="btnStudy">📚 Учёба</button>
+            <button class="status-btn btn-coffee" id="btnCoffee">☕ Кофе</button>
+            <button class="status-btn btn-game" id="btnGame">🎮 В игре</button>
+            <button class="status-btn btn-home" id="btnHome">🏠 Дома</button>
+        </div>
+    </div>
+
+    <!-- Монитор группы -->
+    <div class="group-section">
+        <div class="group-title">
+            📡 Монитор группы
+            <span id="memberCount">0 участников</span>
+        </div>
+        <div id="grouplist" class="user-list">
+            <div class="empty-message">Загрузка участников...</div>
+        </div>
+    </div>
+    <div class="footer-note">
+        ⚡ статусы обновляются автоматически · данные Supabase в реальном времени
+    </div>
+</div>
+
+<script type="module">
+    // ----- ПОДКЛЮЧЕНИЕ SUPABASE (ВАШИ ДАННЫЕ ИЗ ФАЙЛА) -----
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const URL = 'https://rncrchgizyjhowbdpqnl.supabase.co';
+    // Внимание: используем реальный publishable ключ из условия (он не секретный для клиента)
+    const KEY = 'sb_publishable_IhtftS6uBeaKf8YndlIFq_0OIMU5yh';
+    const supabase = createClient(URL, KEY);
+
+    // ID текущего пользователя (зафиксирован, как в скрипте из image)
+    const MY_ID = '2025fcea-eb4d-47fc-82fd-aa31678f69eb';
+
+    // Глобальная функция для изменения статуса (доступна и через onclick, но через addEventListener удобнее)
+    window.changeStatus = async (text, color) => {
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ status: text, color: color })
+                .eq('id', MY_ID);
+
+            if (error) {
+                console.error("Ошибка RLS/update:", error);
+                alert("Ошибка! Проверьте RLS политики в Supabase.\n" + error.message);
+            } else {
+                // После успешного обновления обновляем список группы
+                await fetchGroup();
+            }
+        } catch (err) {
+            console.error("changeStatus error:", err);
+            alert("Не удалось изменить статус: " + err.message);
+        }
+    };
+
+    // Функция получения всех профилей и рендер
+    async function fetchGroup() {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .order('username', { ascending: true });
+
+        if (error) {
+            console.error("Ошибка выборки profiles:", error);
+            const listContainer = document.getElementById('grouplist');
+            if (listContainer) listContainer.innerHTML = `<div class="empty-message">❌ Ошибка загрузки: ${error.message}</div>`;
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            const listContainer = document.getElementById('grouplist');
+            if (listContainer) listContainer.innerHTML = `<div class="empty-message">👥 Пока нет участников в группе</div>`;
+            document.getElementById('memberCount').innerText = `0 участников`;
+            return;
+        }
+
+        // Рендер списка участников (как на скрине: имя + статус + цветной индикатор)
+        const list = document.getElementById('grouplist');
+        if (list) {
+            list.innerHTML = data.map(user => {
+                // Безопасное отображение полей
+                const username = user.username || 'Аноним';
+                const statusText = user.status || 'Статус не задан';
+                const dotColor = user.color || '#cccccc';
+                // добавим иконку на основе ключевых слов статуса (необязательно, но красиво)
+                let statusIcon = '';
+                if (user.status && user.status.toLowerCase().includes('учеб')) statusIcon = '📖 ';
+                else if (user.status && user.status.toLowerCase().includes('кофе')) statusIcon = '☕ ';
+                else if (user.status && user.status.toLowerCase().includes('игр')) statusIcon = '🎮 ';
+                else if (user.status && user.status.toLowerCase().includes('дом')) statusIcon = '🏠 ';
+                else statusIcon = '💬 ';
+                
+                return `
+                    <div class="user-item">
+                        <div class="status-dot" style="background: ${dotColor}; box-shadow: 0 0 0 2px white, 0 0 0 3px ${dotColor}60;"></div>
+                        <div class="user-info">
+                            <div class="user-name">${escapeHtml(username)} ${user.id === MY_ID ? ' <span style="font-size:0.7rem; background:#e2f0ff; padding:2px 8px; border-radius:40px;">вы</span>' : ''}</div>
+                            <div class="user-status-text">${statusIcon}${escapeHtml(statusText)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('memberCount').innerText = `${data.length} участник${data.length % 10 === 1 && data.length !== 11 ? '' : 'ов'}`;
+        }
+
+        // Обновляем информацию о текущем пользователе (myInfo)
+        const me = data.find(u => u.id === MY_ID);
+        const myInfoDiv = document.getElementById('myInfo');
+        if (me) {
+            const username = me.username || 'Almas';
+            const myStatus = me.status || 'статус не указан';
+            myInfoDiv.innerHTML = `✅ Вы зашли как: <strong>${escapeHtml(username)}</strong>  ·  текущий статус: <span style="background:#eef2ff; padding:2px 10px; border-radius:40px;">${escapeHtml(myStatus)}</span>`;
+        } else {
+            myInfoDiv.innerHTML = `⚠️ Ваш профиль (ID: ${MY_ID}) не найден в таблице profiles. Убедитесь, что запись существует.`;
+        }
+    }
+
+    // простой защитник от XSS
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    // ----- ПРИВЯЗКА КНОПОК СТАТУСОВ (цвета и текст в точности как на скрине) -----
+    // Согласно интерфейсу "Учёба, Кофе, В игре, Дома" + цветовые метки
+    function setupButtons() {
+        const btnStudy = document.getElementById('btnStudy');
+        const btnCoffee = document.getElementById('btnCoffee');
+        const btnGame = document.getElementById('btnGame');
+        const btnHome = document.getElementById('btnHome');
+
+        if (btnStudy) {
+            btnStudy.addEventListener('click', () => {
+                changeStatus('Учёба', '#3b82f6');
+            });
+        }
+        if (btnCoffee) {
+            btnCoffee.addEventListener('click', () => {
+                changeStatus('Кофе-брейк', '#d97706');
+            });
+        }
+        if (btnGame) {
+            btnGame.addEventListener('click', () => {
+                changeStatus('В игре', '#8b5cf6');
+            });
+        }
+        if (btnHome) {
+            btnHome.addEventListener('click', () => {
+                changeStatus('Дома', '#2ecc71');
+            });
+        }
+    }
+
+    // Дополнительно: можно обработать случай, если статус уже содержит конкретный текст, но не критично.
+    // Запуск загрузки группы и автообновление каждые 5 секунд (как в оригинале)
+    async function init() {
+        await fetchGroup();
+        setupButtons();
+        // Автоматическое обновление каждые 5 секунд, как на скрине
+        setInterval(async () => {
+            await fetchGroup();
+        }, 5000);
+        
+        // Дополнительно: слушаем реальные изменения через supabase subscription (опционально)
+        // но для полного соответствия скрину оставим polling. Однако добавим канал для моментальной синхронизации (бонус)
+        try {
+            const channel = supabase
+                .channel('profiles-changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+                    // При любом изменении таблицы обновляем список мгновенно
+                    fetchGroup();
+                })
+                .subscribe();
+            // очистка не требуется, тк страница живет долго. но сохраним ссылку если нужно
+        } catch (e) {
+            console.warn("Realtime подписка недоступна, но polling работает", e);
+        }
+    }
+
+    // Выполняем инициализацию
+    init();
+
+    // Экспортируем changeStatus в window на всякий случай (по требованию изначального кода)
+    window.changeStatus = window.changeStatus || changeStatus;
+</script>
+</body>
+</html>
