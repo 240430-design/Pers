@@ -217,16 +217,6 @@
             margin: 16px;
             border-radius: 12px;
             color: #991b1b;
-            font-size: 0.85rem;
-        }
-
-        .info-box {
-            background: #e0f2fe;
-            border-left: 4px solid #0284c7;
-            padding: 16px;
-            margin: 16px;
-            border-radius: 12px;
-            font-size: 0.85rem;
         }
     </style>
 </head>
@@ -239,11 +229,10 @@
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const URL = 'https://hnkltaebpyqsasljixkg.supabase.co';
+       const URL = 'https://hnkltaebpyqsasljixkg.supabase.co';
     // Внимание: используем реальный publishable ключ из условия (он не секретный для клиента)
     const KEY = 'sb_publishable_ZpJ8sXBpfHiel-ymO1rE3A_NTt2Wp-G';
     const supabase = createClient(URL, KEY);
-
 
     function getColorForStatus(status) {
         if (!status) return '#cccccc';
@@ -255,19 +244,13 @@
     }
 
     async function ensureProfile(user) {
-        // Проверяем существование профиля
-        const { data: existingProfile, error: fetchError } = await supabase
+        const { data: existingProfile } = await supabase
             .from('profiles')
             .select('id')
             .eq('id', user.id)
             .maybeSingle();
 
-        if (fetchError && !fetchError.message.includes('no rows')) {
-            console.error('Ошибка проверки профиля:', fetchError);
-        }
-
         if (!existingProfile) {
-            // Создаем профиль
             const username = user.user_metadata?.full_name || 
                             user.user_metadata?.name ||
                             user.email?.split('@')[0] || 
@@ -290,12 +273,36 @@
         return true;
     }
 
-    async function checkSession() {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // Обработка URL после редиректа от Google
+    async function handleAuthCallback() {
+        // Проверяем есть ли hash параметры (токены после редиректа)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
         
-        if (sessionError) {
-            console.error('Session error:', sessionError);
+        if (accessToken && refreshToken) {
+            // Устанавливаем сессию из URL
+            const { data, error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken
+            });
+            
+            if (error) {
+                console.error('Ошибка установки сессии:', error);
+            }
+            
+            // Очищаем URL от токенов
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return true;
         }
+        return false;
+    }
+
+    async function checkSession() {
+        // Сначала проверяем, не пришли ли токены в URL
+        await handleAuthCallback();
+        
+        const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
             renderAuthPage();
@@ -326,31 +333,22 @@
                         </svg>
                         Войти через Google
                     </button>
-                    <div class="info-box" style="margin-top: 24px;">
-                        <strong>⚠️ Важно:</strong> Убедитесь, что в Google Cloud Console добавлен redirect URI:<br>
-                        <code style="background: #e2e8f0; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 8px;">
-                            https://rncrchgizyjhowbdpqnl.supabase.co/auth/v1/callback
-                        </code>
-                    </div>
                 </div>
             </div>
         `;
 
         document.getElementById('googleSignIn').addEventListener('click', async () => {
             try {
+                // Убираем redirectTo - пусть Supabase сам решает
                 const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin + window.location.pathname,
-                        queryParams: {
-                            access_type: 'offline',
-                            prompt: 'consent',
-                        }
+                        // Не указываем redirectTo, чтобы избежать ошибки "requested path is invalid"
                     }
                 });
                 if (error) {
                     console.error('Ошибка входа:', error);
-                    alert('Ошибка входа: ' + error.message + '\n\nПроверьте настройки Google OAuth в Supabase');
+                    alert('Ошибка входа: ' + error.message);
                 }
             } catch (err) {
                 console.error('Exception:', err);
