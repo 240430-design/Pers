@@ -41,11 +41,6 @@
             color: #1a1a2e;
         }
 
-        .auth-container p {
-            color: #666;
-            margin-bottom: 32px;
-        }
-
         .google-btn {
             background: white;
             color: #444;
@@ -65,7 +60,6 @@
             background: #f8f9fa;
             border-color: #4285f4;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .logout-btn {
@@ -75,41 +69,17 @@
             padding: 8px 16px;
             border-radius: 40px;
             cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
         }
 
         .profile-card {
-            background: white;
             padding: 24px 28px;
             border-bottom: 1px solid #eef2f6;
         }
 
         .profile-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .profile-header h2 {
-            font-size: 1.6rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #1e2b3c, #2c4c6c);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-        }
-
-        #myInfo {
-            background: #f8fafd;
-            padding: 12px 18px;
-            border-radius: 28px;
-            font-size: 0.95rem;
-            color: #1e4663;
-            border: 1px solid #dce5ef;
+            align-items: center;
             margin-bottom: 20px;
         }
 
@@ -117,25 +87,17 @@
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
-            margin: 16px 0 8px;
+            margin: 16px 0;
         }
 
         .status-btn {
-            flex: 1 0 auto;
-            background: #f8fafc;
+            flex: 1;
+            padding: 12px;
             border: none;
-            padding: 12px 8px;
             border-radius: 60px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04), inset 0 0 0 1px #e2e8f0;
-        }
-
-        .status-btn:hover {
-            transform: translateY(-2px);
-            background: white;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.08);
         }
 
         .btn-study { background: #e9f3fa; color: #1e6f9f; }
@@ -144,16 +106,7 @@
         .btn-home { background: #e6f4ea; color: #2c6e3c; }
 
         .group-section {
-            padding: 16px 28px 28px 28px;
-        }
-
-        .group-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            font-weight: 600;
-            font-size: 1.3rem;
+            padding: 16px 28px 28px;
         }
 
         .user-list {
@@ -165,39 +118,28 @@
         }
 
         .user-item {
-            background: white;
+            background: #f8fafc;
             border-radius: 28px;
             padding: 14px 20px;
             display: flex;
             align-items: center;
             gap: 14px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.03), 0 0 0 1px #e9edf2;
         }
 
         .status-dot {
             width: 14px;
             height: 14px;
             border-radius: 14px;
-            flex-shrink: 0;
-        }
-
-        .user-info {
-            flex-grow: 1;
         }
 
         .user-name {
             font-weight: 700;
-            font-size: 1.05rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
         }
 
         .user-status-text {
             font-size: 0.8rem;
             color: #5c6f87;
-            background: #f0f4fa;
+            background: white;
             padding: 4px 12px;
             border-radius: 30px;
             display: inline-block;
@@ -210,13 +152,11 @@
             color: #666;
         }
 
-        .error-box {
-            background: #fee2e2;
-            border-left: 4px solid #ef4444;
-            padding: 16px;
-            margin: 16px;
-            border-radius: 12px;
-            color: #991b1b;
+        #myInfo {
+            background: #f8fafd;
+            padding: 12px 18px;
+            border-radius: 28px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -233,6 +173,13 @@
     // Внимание: используем реальный publishable ключ из условия (он не секретный для клиента)
     const KEY = 'sb_publishable_ZpJ8sXBpfHiel-ymO1rE3A_NTt2Wp-G';
     const supabase = createClient(URL, KEY);
+
+    // ВАЖНО: Укажите URL вашего сайта!
+    // Если открываете локально: http://localhost:5500
+    // Если на GitHub Pages: https://240430-design.github.io/НАЗВАНИЕ_РЕПОЗИТОРИЯ/
+    const SITE_URL = window.location.origin + window.location.pathname;
+    // ИЛИ раскомментируйте и укажите вручную:
+    // const SITE_URL = 'https://240430-design.github.io';
 
     function getColorForStatus(status) {
         if (!status) return '#cccccc';
@@ -256,64 +203,24 @@
                             user.email?.split('@')[0] || 
                             'Пользователь';
             
-            const { error: insertError } = await supabase
-                .from('profiles')
-                .insert([{
-                    id: user.id,
-                    username: username,
-                    status: 'Присоединился',
-                    email: user.email
-                }]);
-
-            if (insertError) {
-                console.error('Ошибка создания профиля:', insertError);
-                return false;
-            }
+            await supabase.from('profiles').insert([{
+                id: user.id,
+                username: username,
+                status: 'Присоединился',
+                email: user.email
+            }]);
         }
-        return true;
-    }
-
-    // Обработка URL после редиректа от Google
-    async function handleAuthCallback() {
-        // Проверяем есть ли hash параметры (токены после редиректа)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-        
-        if (accessToken && refreshToken) {
-            // Устанавливаем сессию из URL
-            const { data, error } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken
-            });
-            
-            if (error) {
-                console.error('Ошибка установки сессии:', error);
-            }
-            
-            // Очищаем URL от токенов
-            window.history.replaceState({}, document.title, window.location.pathname);
-            return true;
-        }
-        return false;
     }
 
     async function checkSession() {
-        // Сначала проверяем, не пришли ли токены в URL
-        await handleAuthCallback();
-        
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
             renderAuthPage();
         } else {
-            const profileCreated = await ensureProfile(session.user);
-            if (profileCreated !== false) {
-                renderMainApp(session.user);
-                startRealtimeUpdates(session.user);
-            } else {
-                renderAuthPage();
-            }
+            await ensureProfile(session.user);
+            renderMainApp(session.user);
+            startRealtimeUpdates(session.user);
         }
     }
 
@@ -333,25 +240,26 @@
                         </svg>
                         Войти через Google
                     </button>
+                    <p style="margin-top: 20px; font-size: 12px; color: #666;">
+                        После входа вы вернетесь на: ${SITE_URL}
+                    </p>
                 </div>
             </div>
         `;
 
         document.getElementById('googleSignIn').addEventListener('click', async () => {
             try {
-                // Убираем redirectTo - пусть Supabase сам решает
                 const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        // Не указываем redirectTo, чтобы избежать ошибки "requested path is invalid"
+                        redirectTo: SITE_URL  // ВАЖНО: указываем текущий URL
                     }
                 });
                 if (error) {
-                    console.error('Ошибка входа:', error);
-                    alert('Ошибка входа: ' + error.message);
+                    console.error('Ошибка:', error);
+                    alert('Ошибка: ' + error.message);
                 }
             } catch (err) {
-                console.error('Exception:', err);
                 alert('Ошибка: ' + err.message);
             }
         });
@@ -367,7 +275,6 @@
                         <button class="logout-btn" id="logoutBtn">Выйти</button>
                     </div>
                     <div id="myInfo">Загрузка...</div>
-                    <div style="font-weight: 500; margin: 8px 0 6px 0;">✨ Выберите статус</div>
                     <div class="status-grid">
                         <button class="status-btn btn-study" id="btnStudy">📚 Учёба</button>
                         <button class="status-btn btn-coffee" id="btnCoffee">☕ Кофе</button>
@@ -382,12 +289,12 @@
                         <span id="memberCount">0 участников</span>
                     </div>
                     <div id="grouplist" class="user-list">
-                        <div class="loading">Загрузка участников...</div>
+                        <div class="loading">Загрузка...</div>
                     </div>
                 </div>
                 
-                <div style="padding: 16px 28px 28px 28px; border-top: 1px solid #eef2f6;">
-                    <small style="color: #666;">✅ Вы вошли как: ${user.email}</small>
+                <div style="padding: 16px; text-align: center; color: #666;">
+                    ✅ ${user.email}
                 </div>
             </div>
         `;
@@ -397,106 +304,76 @@
             checkSession();
         });
 
-        document.getElementById('btnStudy')?.addEventListener('click', () => changeStatus(user.id, 'Учёба'));
-        document.getElementById('btnCoffee')?.addEventListener('click', () => changeStatus(user.id, 'Кофе-брейк'));
-        document.getElementById('btnGame')?.addEventListener('click', () => changeStatus(user.id, 'В игре'));
-        document.getElementById('btnHome')?.addEventListener('click', () => changeStatus(user.id, 'Дома'));
+        document.getElementById('btnStudy').onclick = () => changeStatus(user.id, 'Учёба');
+        document.getElementById('btnCoffee').onclick = () => changeStatus(user.id, 'Кофе-брейк');
+        document.getElementById('btnGame').onclick = () => changeStatus(user.id, 'В игре');
+        document.getElementById('btnHome').onclick = () => changeStatus(user.id, 'Дома');
 
         fetchGroup(user.id);
     }
 
     async function changeStatus(userId, status) {
-        const { error } = await supabase
-            .from('profiles')
-            .update({ status: status })
-            .eq('id', userId);
-
-        if (error) {
-            console.error('Ошибка обновления:', error);
-            alert('Ошибка: ' + error.message);
-        }
+        await supabase.from('profiles').update({ status }).eq('id', userId);
+        fetchGroup(userId);
     }
 
     async function fetchGroup(currentUserId) {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .order('username', { ascending: true });
-
-        if (error) {
-            console.error('Ошибка загрузки:', error);
-            return;
-        }
+        const { data } = await supabase.from('profiles').select('*').order('username');
+        
+        if (!data) return;
 
         const me = data.find(u => u.id === currentUserId);
         const myInfoDiv = document.getElementById('myInfo');
         if (myInfoDiv && me) {
-            myInfoDiv.innerHTML = `
-                <span>✅ <strong>${escapeHtml(me.username)}</strong> · статус: ${escapeHtml(me.status || 'не задан')}</span>
-            `;
+            myInfoDiv.innerHTML = `✅ <strong>${me.username}</strong> · статус: ${me.status || 'не задан'}`;
         }
 
         const list = document.getElementById('grouplist');
-        if (list && data) {
-            if (data.length === 0) {
-                list.innerHTML = '<div class="loading">Пока нет участников</div>';
-            } else {
-                list.innerHTML = data.map(user => {
-                    const dotColor = getColorForStatus(user.status);
-                    const status = user.status || 'Статус не задан';
-                    let statusIcon = '';
-                    if (status.includes('Учёба')) statusIcon = '📚 ';
-                    else if (status.includes('Кофе')) statusIcon = '☕ ';
-                    else if (status.includes('Игра')) statusIcon = '🎮 ';
-                    else if (status.includes('Дома')) statusIcon = '🏠 ';
-                    
-                    return `
-                        <div class="user-item">
-                            <div class="status-dot" style="background: ${dotColor};"></div>
-                            <div class="user-info">
-                                <div class="user-name">
-                                    ${escapeHtml(user.username)}
-                                    ${user.id === currentUserId ? ' <span style="font-size:0.7rem; background:#e2f0ff; padding:2px 8px; border-radius:40px;">вы</span>' : ''}
-                                </div>
-                                <div class="user-status-text">${statusIcon}${escapeHtml(status)}</div>
+        if (list) {
+            list.innerHTML = data.map(user => {
+                const dotColor = getColorForStatus(user.status);
+                const status = user.status || 'Статус не задан';
+                
+                return `
+                    <div class="user-item">
+                        <div class="status-dot" style="background: ${dotColor};"></div>
+                        <div class="user-info">
+                            <div class="user-name">
+                                ${user.username}
+                                ${user.id === currentUserId ? ' (вы)' : ''}
                             </div>
+                            <div class="user-status-text">${status}</div>
                         </div>
-                    `;
-                }).join('');
-            }
-            const count = data.length;
-            document.getElementById('memberCount').innerText = `${count} участник${count % 10 === 1 && count !== 11 ? '' : 'ов'}`;
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('memberCount').innerText = `${data.length} участников`;
         }
     }
 
     function startRealtimeUpdates(userId) {
         fetchGroup(userId);
         setInterval(() => fetchGroup(userId), 5000);
-        
-        supabase
-            .channel('profiles-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-                fetchGroup(userId);
-            })
-            .subscribe();
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, (m) => {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-
-    supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-            checkSession();
+    // Обработка возврата от Google
+    async function handleRedirect() {
+        const hash = window.location.hash;
+        if (hash && hash.includes('access_token')) {
+            // Извлекаем токены из URL
+            const params = new URLSearchParams(hash.substring(1));
+            const access_token = params.get('access_token');
+            const refresh_token = params.get('refresh_token');
+            
+            if (access_token && refresh_token) {
+                await supabase.auth.setSession({ access_token, refresh_token });
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
         }
-    });
+    }
 
+    // Запуск
+    await handleRedirect();
     checkSession();
 </script>
 </body>
