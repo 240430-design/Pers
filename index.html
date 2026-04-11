@@ -27,7 +27,6 @@
             height: 90vh;
         }
 
-        /* Левая панель - Монитор группы */
         .sidebar {
             background: white;
             border-radius: 24px;
@@ -70,6 +69,9 @@
             margin-bottom: 8px;
             transition: all 0.2s;
             border: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
         .user-card.online {
@@ -126,7 +128,21 @@
             display: inline-block;
         }
 
-        /* Центральная панель - Чат */
+        .like-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .like-btn:hover {
+            background: #fee2e2;
+            transform: scale(1.1);
+        }
+
         .chat-area {
             background: white;
             border-radius: 24px;
@@ -230,21 +246,20 @@
             cursor: pointer;
         }
 
-        /* Правая панель - Рейтинг и достижения */
         .right-panel {
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
 
-        .rank-card, .achievements-card {
+        .rank-card, .achievements-card, .stats-card {
             background: white;
             border-radius: 24px;
             padding: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
-        .rank-card h3, .achievements-card h3 {
+        .rank-card h3, .achievements-card h3, .stats-card h3 {
             font-size: 1.1rem;
             margin-bottom: 16px;
             color: #1e293b;
@@ -335,12 +350,19 @@
             margin-top: 6px;
         }
 
-        .achievement-desc {
-            font-size: 0.6rem;
-            color: #64748b;
+        .stats-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        /* Модалка */
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
         .modal {
             position: fixed;
             top: 0;
@@ -420,7 +442,7 @@
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-        const URL = 'https://hnkltaebpyqsasljixkg.supabase.co';
+          const URL = 'https://hnkltaebpyqsasljixkg.supabase.co';
     // Внимание: используем реальный publishable ключ из условия (он не секретный для клиента)
     const KEY = 'sb_publishable_ZpJ8sXBpfHiel-ymO1rE3A_NTt2Wp-G';
     const supabase = createClient(URL, KEY);
@@ -430,69 +452,183 @@
         let studyInterval = null;
         let messageCount = 0;
 
-        // Достижения и их условия
-        const ACHIEVEMENTS = {
-            early_bird: { name: "🌅 Ранняя пташка", desc: "Зашел до 8:00", icon: "🌅", check: (user) => {
-                const hour = user.first_login_hour || new Date(user.created_at).getHours();
-                return hour < 8;
-            }},
-            marathoner: { name: "🏃 Марафонец", desc: "Проучился >2 часов за раз", icon: "🏃", check: (user) => (user.study_seconds || 0) > 7200 },
-            activist: { name: "💬 Активист", desc: "Написал 20+ сообщений", icon: "💬", check: (user) => (user.messages_count || 0) >= 20 },
-            super_activist: { name: "⭐ Супер-активист", desc: "Написал 50+ сообщений", icon: "⭐", check: (user) => (user.messages_count || 0) >= 50 },
-            hard_worker: { name: "📚 Трудоголик", desc: "Общее время учебы >5 часов", icon: "📚", check: (user) => (user.total_study_seconds || 0) > 18000 },
-            consistent: { name: "🎯 Постоянный", desc: "Учился 7 дней подряд", icon: "🎯", check: (user) => (user.study_days || 0) >= 7 },
-            night_owl: { name: "🦉 Ночная сова", desc: "Учился после 23:00", icon: "🦉", check: (user) => user.has_night_study === true },
-            helper: { name: "🤝 Помощник", desc: "Получил 5 лайков", icon: "🤝", check: (user) => (user.likes_received || 0) >= 5 }
-        };
-
-        // Функция для расчета XP (опыта)
-        function calculateXP(user) {
-            let xp = 0;
-            xp += (user.study_seconds || 0) / 60; // 1 XP за минуту учебы
-            xp += (user.messages_count || 0) * 5; // 5 XP за сообщение
-            xp += (user.likes_received || 0) * 10; // 10 XP за лайк
-            
-            // Бонус за достижения
-            const achievements = user.achievements || [];
-            xp += achievements.length * 50;
-            
-            return Math.floor(xp);
-        }
-
-        // Проверка и выдача достижений
-        async function checkAndAwardAchievements(userId, userData) {
-            const currentAchievements = userData.achievements || [];
-            const newAchievements = [];
-            
-            for (const [key, ach] of Object.entries(ACHIEVEMENTS)) {
-                if (!currentAchievements.includes(key) && ach.check(userData)) {
-                    newAchievements.push(key);
-                }
+        // =====================================================
+        // ФУНКЦИЯ 1: Отправить лайк пользователю
+        // =====================================================
+        /**
+         * Отправляет лайк пользователю и обновляет рейтинг
+         * @param {string} targetUserId - ID пользователя, которому ставим лайк
+         * @returns {Promise<Object>} - результат операции
+         */
+        async function sendLike(targetUserId) {
+            if (!currentUser) return { success: false, error: 'Не авторизован' };
+            if (targetUserId === currentUser.id) {
+                showNotification('❌ Нельзя лайкнуть самого себя!');
+                return { success: false, error: 'Self-like not allowed' };
             }
-            
-            if (newAchievements.length > 0) {
-                const updatedAchievements = [...currentAchievements, ...newAchievements];
+
+            try {
+                // Проверяем, не лайкал ли уже этот пользователь сегодня
+                const today = new Date().toISOString().split('T')[0];
+                const { data: existingLike } = await supabase
+                    .from('likes')
+                    .select('*')
+                    .eq('from_user_id', currentUser.id)
+                    .eq('to_user_id', targetUserId)
+                    .gte('created_at', today)
+                    .maybeSingle();
+
+                if (existingLike) {
+                    showNotification('⚠️ Вы уже лайкали этого пользователя сегодня!');
+                    return { success: false, error: 'Already liked today' };
+                }
+
+                // Добавляем лайк
+                const { error: insertError } = await supabase
+                    .from('likes')
+                    .insert({
+                        from_user_id: currentUser.id,
+                        to_user_id: targetUserId,
+                        created_at: new Date().toISOString()
+                    });
+
+                if (insertError) throw insertError;
+
+                // Обновляем счетчик лайков у пользователя
+                const { data: targetUser } = await supabase
+                    .from('profiles')
+                    .select('likes_received')
+                    .eq('id', targetUserId)
+                    .single();
+
+                const newLikeCount = (targetUser?.likes_received || 0) + 1;
                 await supabase
                     .from('profiles')
-                    .update({ achievements: updatedAchievements })
-                    .eq('id', userId);
-                
-                // Показываем уведомление о новых достижениях
-                for (const achKey of newAchievements) {
-                    showNotification(`🏆 Новое достижение: ${ACHIEVEMENTS[achKey].name}! ${ACHIEVEMENTS[achKey].desc}`);
+                    .update({ likes_received: newLikeCount })
+                    .eq('id', targetUserId);
+
+                // Проверяем достижение "Помощник" (5 лайков)
+                if (newLikeCount >= 5) {
+                    const { data: userAchievements } = await supabase
+                        .from('profiles')
+                        .select('achievements')
+                        .eq('id', targetUserId)
+                        .single();
+                    
+                    const achievements = userAchievements?.achievements || [];
+                    if (!achievements.includes('helper')) {
+                        await supabase
+                            .from('profiles')
+                            .update({ achievements: [...achievements, 'helper'] })
+                            .eq('id', targetUserId);
+                        showNotification(`🎉 Пользователь получил достижение "Помощник"!`);
+                    }
                 }
-                
-                return true;
+
+                showNotification('❤️ Лайк отправлен!');
+                await loadUsers(); // Обновляем список
+                return { success: true, likesCount: newLikeCount };
+            } catch (error) {
+                console.error('Ошибка при отправке лайка:', error);
+                return { success: false, error: error.message };
             }
-            return false;
         }
 
+        // =====================================================
+        // ФУНКЦИЯ 2: Получить статистику группы
+        // =====================================================
+        /**
+         * Получает общую статистику по группе
+         * @returns {Promise<Object>} - статистика группы
+         */
+        async function getGroupStats() {
+            try {
+                // Получаем всех пользователей
+                const { data: users, error: usersError } = await supabase
+                    .from('profiles')
+                    .select('*');
+                
+                if (usersError) throw usersError;
+
+                // Получаем сообщения за сегодня
+                const today = new Date().toISOString().split('T')[0];
+                const { data: todayMessages, error: messagesError } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .gte('created_at', today);
+                
+                if (messagesError) throw messagesError;
+
+                // Получаем лайки за сегодня
+                const { data: todayLikes, error: likesError } = await supabase
+                    .from('likes')
+                    .select('*')
+                    .gte('created_at', today);
+                
+                if (likesError) throw likesError;
+
+                // Рассчитываем статистику
+                const totalUsers = users.length;
+                const onlineUsers = users.filter(u => {
+                    if (!u.last_seen) return false;
+                    return (new Date() - new Date(u.last_seen)) < 120000;
+                }).length;
+                
+                const totalStudyTime = users.reduce((sum, u) => sum + (u.total_study_seconds || 0), 0);
+                const totalStudyHours = Math.floor(totalStudyTime / 3600);
+                
+                const totalMessages = todayMessages?.length || 0;
+                const totalLikes = todayLikes?.length || 0;
+                
+                const topStudent = [...users].sort((a, b) => 
+                    (b.total_study_seconds || 0) - (a.total_study_seconds || 0)
+                )[0];
+
+                return {
+                    success: true,
+                    stats: {
+                        totalUsers,
+                        onlineUsers,
+                        totalStudyHours,
+                        totalMessages,
+                        totalLikes,
+                        topStudent: topStudent?.username || 'Нет данных',
+                        topStudentHours: topStudent ? Math.floor((topStudent.total_study_seconds || 0) / 3600) : 0
+                    }
+                };
+            } catch (error) {
+                console.error('Ошибка получения статистики:', error);
+                return { success: false, error: error.message, stats: null };
+            }
+        }
+
+        // Функция для отображения уведомлений
         function showNotification(message) {
             const notification = document.createElement('div');
             notification.className = 'notification';
             notification.textContent = message;
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Достижения
+        const ACHIEVEMENTS = {
+            early_bird: { name: "🌅 Ранняя пташка", desc: "Зашел до 8:00", icon: "🌅" },
+            marathoner: { name: "🏃 Марафонец", desc: "Проучился >2 часов за раз", icon: "🏃" },
+            activist: { name: "💬 Активист", desc: "Написал 20+ сообщений", icon: "💬" },
+            super_activist: { name: "⭐ Супер-активист", desc: "Написал 50+ сообщений", icon: "⭐" },
+            hard_worker: { name: "📚 Трудоголик", desc: "Общее время учебы >5 часов", icon: "📚" },
+            helper: { name: "🤝 Помощник", desc: "Получил 5 лайков", icon: "🤝" }
+        };
+
+        function calculateXP(user) {
+            let xp = 0;
+            xp += (user.total_study_seconds || 0) / 60;
+            xp += (user.messages_count || 0) * 5;
+            xp += (user.likes_received || 0) * 10;
+            const achievements = user.achievements || [];
+            xp += achievements.length * 50;
+            return Math.floor(xp);
         }
 
         function formatTime(seconds) {
@@ -521,7 +657,6 @@
                 created_at: new Date().toISOString()
             });
             
-            // Увеличиваем счетчик сообщений
             messageCount++;
             await supabase
                 .from('profiles')
@@ -529,7 +664,27 @@
                 .eq('id', currentUser.id);
             
             currentUser.messages_count = messageCount;
-            await checkAndAwardAchievements(currentUser.id, currentUser);
+            
+            // Проверка достижений за сообщения
+            if (messageCount >= 20 && messageCount < 50) {
+                const achievements = currentUser.achievements || [];
+                if (!achievements.includes('activist')) {
+                    await supabase
+                        .from('profiles')
+                        .update({ achievements: [...achievements, 'activist'] })
+                        .eq('id', currentUser.id);
+                    showNotification('🎉 Получено достижение "Активист"!');
+                }
+            } else if (messageCount >= 50) {
+                const achievements = currentUser.achievements || [];
+                if (!achievements.includes('super_activist')) {
+                    await supabase
+                        .from('profiles')
+                        .update({ achievements: [...achievements, 'super_activist'] })
+                        .eq('id', currentUser.id);
+                    showNotification('🎉 Получено достижение "Супер-активист"!');
+                }
+            }
         }
 
         async function loadMessages() {
@@ -565,23 +720,30 @@
             const onlineUsers = users.filter(u => isOnline(u.last_seen));
             document.getElementById('onlineCount').innerHTML = `🟢 ${onlineUsers.length} онлайн`;
             
-            // Рендер списка пользователей
             const container = document.getElementById('usersList');
             container.innerHTML = users.map(user => {
                 const online = isOnline(user.last_seen);
                 const studyTime = user.study_seconds || 0;
+                const isCurrent = user.id === currentUser?.id;
                 return `
-                    <div class="user-card ${online ? 'online' : ''}" style="display: flex; gap: 10px; align-items: center;">
+                    <div class="user-card ${online ? 'online' : ''}">
                         <div class="user-avatar">${user.username.charAt(0).toUpperCase()}</div>
                         <div class="user-info">
                             <div class="user-name">
                                 ${escapeHtml(user.username)}
                                 ${online ? '<span class="online-dot"></span>' : '⚫'}
-                                ${user.id === currentUser?.id ? ' <span style="font-size:0.65rem; background:#dbeafe; padding:2px 6px; border-radius:10px;">Вы</span>' : ''}
+                                ${isCurrent ? ' <span style="font-size:0.65rem; background:#dbeafe; padding:2px 6px; border-radius:10px;">Вы</span>' : ''}
                             </div>
                             <div class="user-status">${user.status || 'Онлайн'}</div>
                             ${user.status === 'Учёба' ? `<div class="study-timer">📚 ${formatTime(studyTime)}</div>` : ''}
                         </div>
+                        ${!isCurrent ? `
+                            <button class="like-btn" onclick="window.sendLikeToUser('${user.id}')" title="Поставить лайк">
+                                ❤️ ${user.likes_received || 0}
+                            </button>
+                        ` : `
+                            <div style="font-size:0.8rem;">❤️ ${user.likes_received || 0}</div>
+                        `}
                     </div>
                 `;
             }).join('');
@@ -622,6 +784,40 @@
                     }).join('');
                 }
             }
+            
+            // Обновляем статистику группы (ФУНКЦИЯ 2)
+            const stats = await getGroupStats();
+            if (stats.success && stats.stats) {
+                const statsContainer = document.getElementById('groupStats');
+                if (statsContainer) {
+                    statsContainer.innerHTML = `
+                        <div class="stat-item">
+                            <span>👥 Всего участников:</span>
+                            <strong>${stats.stats.totalUsers}</strong>
+                        </div>
+                        <div class="stat-item">
+                            <span>🟢 Сейчас онлайн:</span>
+                            <strong>${stats.stats.onlineUsers}</strong>
+                        </div>
+                        <div class="stat-item">
+                            <span>📚 Общее время учебы:</span>
+                            <strong>${stats.stats.totalStudyHours} ч</strong>
+                        </div>
+                        <div class="stat-item">
+                            <span>💬 Сообщений сегодня:</span>
+                            <strong>${stats.stats.totalMessages}</strong>
+                        </div>
+                        <div class="stat-item">
+                            <span>❤️ Лайков сегодня:</span>
+                            <strong>${stats.stats.totalLikes}</strong>
+                        </div>
+                        <div class="stat-item">
+                            <span>🏆 Лидер по учебе:</span>
+                            <strong>${escapeHtml(stats.stats.topStudent)} (${stats.stats.topStudentHours} ч)</strong>
+                        </div>
+                    `;
+                }
+            }
         }
 
         async function startStudyTimer(userId) {
@@ -630,7 +826,32 @@
                 if (currentUser && currentUser.status === 'Учёба' && studyStartTime) {
                     const elapsed = Math.floor((Date.now() - studyStartTime) / 1000);
                     await supabase.from('profiles').update({ study_seconds: elapsed }).eq('id', userId);
-                    await checkAndAwardAchievements(userId, { ...currentUser, study_seconds: elapsed });
+                    
+                    // Проверка на марафонца
+                    if (elapsed >= 7200) { // 2 часа
+                        const userData = await supabase.from('profiles').select('achievements').eq('id', userId).single();
+                        const achievements = userData.data?.achievements || [];
+                        if (!achievements.includes('marathoner')) {
+                            await supabase
+                                .from('profiles')
+                                .update({ achievements: [...achievements, 'marathoner'] })
+                                .eq('id', userId);
+                            showNotification('🎉 Получено достижение "Марафонец"!');
+                        }
+                    }
+                    
+                    // Проверка на трудоголика
+                    if ((currentUser.total_study_seconds + elapsed) >= 18000) { // 5 часов
+                        const userData = await supabase.from('profiles').select('achievements').eq('id', userId).single();
+                        const achievements = userData.data?.achievements || [];
+                        if (!achievements.includes('hard_worker')) {
+                            await supabase
+                                .from('profiles')
+                                .update({ achievements: [...achievements, 'hard_worker'] })
+                                .eq('id', userId);
+                            showNotification('🎉 Получено достижение "Трудоголик"!');
+                        }
+                    }
                 }
             }, 1000);
         }
@@ -675,7 +896,20 @@
             
             if (existing) {
                 currentUser = existing;
+                messageCount = existing.messages_count || 0;
                 await supabase.from('profiles').update({ last_seen: now.toISOString() }).eq('id', currentUser.id);
+                
+                // Проверка на раннюю пташку при входе
+                if (currentHour < 8) {
+                    const achievements = currentUser.achievements || [];
+                    if (!achievements.includes('early_bird')) {
+                        await supabase
+                            .from('profiles')
+                            .update({ achievements: [...achievements, 'early_bird'] })
+                            .eq('id', currentUser.id);
+                        showNotification('🌅 Получено достижение "Ранняя пташка"!');
+                    }
+                }
             } else {
                 const newUser = {
                     id: crypto.randomUUID(),
@@ -684,18 +918,22 @@
                     study_seconds: 0,
                     total_study_seconds: 0,
                     messages_count: 0,
+                    likes_received: 0,
                     achievements: [],
-                    first_login_hour: currentHour,
                     last_seen: now.toISOString(),
                     created_at: now.toISOString()
                 };
                 await supabase.from('profiles').insert(newUser);
                 currentUser = newUser;
+                messageCount = 0;
                 
-                // Проверка на "Раннюю пташку"
                 if (currentHour < 8) {
-                    showNotification('🌅 Вы получили достижение "Ранняя пташка"!');
-                    await checkAndAwardAchievements(currentUser.id, currentUser);
+                    await supabase
+                        .from('profiles')
+                        .update({ achievements: ['early_bird'] })
+                        .eq('id', currentUser.id);
+                    currentUser.achievements = ['early_bird'];
+                    showNotification('🌅 Получено достижение "Ранняя пташка"!');
                 }
             }
             
@@ -709,7 +947,6 @@
             await loadUsers();
             await loadMessages();
             
-            // Подписки
             supabase.channel('profiles-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => loadUsers()).subscribe();
             supabase.channel('messages-changes').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => loadMessages()).subscribe();
             
@@ -750,59 +987,14 @@
                             <h3>🏆 Топ студентов</h3>
                             <div class="rank-list" id="rankList">Загрузка...</div>
                         </div>
+                        <div class="stats-card">
+                            <h3>📊 Статистика группы</h3>
+                            <div class="stats-grid" id="groupStats">Загрузка...</div>
+                        </div>
                         <div class="achievements-card">
                             <h3>🎖️ Мои достижения</h3>
                             <div class="achievements-grid" id="achievementsList">Загрузка...</div>
                         </div>
                     </div>
                 </div>
-            `;
-            
-            document.querySelectorAll('.status-badge').forEach(btn => {
-                btn.addEventListener('click', () => changeStatus(btn.getAttribute('data-status')));
-                if (currentUser.status === btn.getAttribute('data-status')) btn.classList.add('active');
-            });
-            
-            document.getElementById('sendBtn').onclick = () => {
-                const input = document.getElementById('messageInput');
-                if (input.value.trim()) {
-                    sendMessage(input.value);
-                    input.value = '';
-                }
-            };
-            document.getElementById('messageInput').onkeypress = (e) => {
-                if (e.key === 'Enter') document.getElementById('sendBtn').click();
-            };
-        }
-        
-        function showNameModal() {
-            const root = document.getElementById('root');
-            root.innerHTML = `
-                <div class="modal">
-                    <div class="modal-content">
-                        <h2>🎓 Добро пожаловать в StudyHub!</h2>
-                        <p>Введите ваше имя для входа</p>
-                        <input type="text" id="usernameInput" placeholder="Ваше имя" maxlength="30">
-                        <button id="startBtn">Начать учиться</button>
-                    </div>
-                </div>
-            `;
-            document.getElementById('startBtn').onclick = () => {
-                const name = document.getElementById('usernameInput').value.trim();
-                if (name) initUser(name);
-                else alert('Введите имя!');
-            };
-            document.getElementById('usernameInput').onkeypress = (e) => {
-                if (e.key === 'Enter') document.getElementById('startBtn').click();
-            };
-        }
-        
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
-        }
-        
-        showNameModal();
-    </script>
-</body>
-</html>
+           
