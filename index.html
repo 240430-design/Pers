@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Монитор группы — Учебная комната</title>
+    <title>StudyHub — Монитор группы с рейтингом и достижениями</title>
     <style>
         * {
             margin: 0;
@@ -15,56 +15,48 @@
         body {
             background: #f0f2f5;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
 
-        /* Основной контейнер - как в Telegram/мессенджере */
         .app-container {
-            max-width: 1400px;
-            width: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr 320px;
+            gap: 20px;
             height: 90vh;
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            display: flex;
-            overflow: hidden;
         }
 
         /* Левая панель - Монитор группы */
         .sidebar {
-            width: 320px;
-            background: #f8fafc;
-            border-right: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 24px;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         .sidebar-header {
             padding: 20px;
-            border-bottom: 1px solid #e2e8f0;
-            background: white;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
         }
 
         .sidebar-header h2 {
-            font-size: 1.3rem;
-            color: #1e293b;
+            font-size: 1.2rem;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         .online-count {
-            font-size: 0.8rem;
-            background: #22c55e;
-            color: white;
-            padding: 2px 10px;
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
             border-radius: 20px;
         }
 
-        /* Список участников */
         .users-list {
             flex: 1;
             overflow-y: auto;
@@ -72,13 +64,10 @@
         }
 
         .user-card {
-            background: white;
+            background: #f8fafc;
             border-radius: 16px;
             padding: 12px;
             margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
             transition: all 0.2s;
             border: 1px solid #e2e8f0;
         }
@@ -89,8 +78,8 @@
         }
 
         .user-avatar {
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             border-radius: 50%;
             display: flex;
@@ -98,7 +87,6 @@
             justify-content: center;
             color: white;
             font-weight: bold;
-            font-size: 1.2rem;
         }
 
         .user-info {
@@ -107,103 +95,65 @@
 
         .user-name {
             font-weight: 600;
-            color: #1e293b;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: wrap;
         }
 
         .online-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             background: #22c55e;
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 0 2px white;
-        }
-
-        .offline-dot {
-            width: 10px;
-            height: 10px;
-            background: #94a3b8;
             border-radius: 50%;
             display: inline-block;
         }
 
         .user-status {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #64748b;
             margin-top: 4px;
         }
 
         .study-timer {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             font-weight: 600;
             background: #e0f2fe;
-            padding: 2px 8px;
-            border-radius: 20px;
+            padding: 2px 6px;
+            border-radius: 12px;
             color: #0284c7;
+            display: inline-block;
         }
 
-        .break-btn {
-            background: #fef08a;
-            border: none;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .logout-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            cursor: pointer;
-        }
-
-        /* Правая панель - Чат */
+        /* Центральная панель - Чат */
         .chat-area {
-            flex: 1;
+            background: white;
+            border-radius: 24px;
             display: flex;
             flex-direction: column;
-            background: white;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         .chat-header {
             padding: 20px;
             border-bottom: 1px solid #e2e8f0;
             background: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-header h3 {
-            color: #1e293b;
         }
 
         .my-controls {
             display: flex;
             gap: 12px;
             align-items: center;
-        }
-
-        .status-buttons {
-            display: flex;
-            gap: 8px;
+            flex-wrap: wrap;
         }
 
         .status-badge {
             background: #f1f5f9;
-            padding: 6px 16px;
+            padding: 6px 14px;
             border-radius: 40px;
-            font-size: 0.85rem;
-            font-weight: 500;
+            font-size: 0.8rem;
             cursor: pointer;
             transition: all 0.2s;
             border: 1px solid #e2e8f0;
@@ -216,10 +166,8 @@
         .status-badge.active {
             background: #3b82f6;
             color: white;
-            border-color: #3b82f6;
         }
 
-        /* Сообщения чата */
         .messages-container {
             flex: 1;
             overflow-y: auto;
@@ -231,8 +179,6 @@
         }
 
         .message {
-            display: flex;
-            flex-direction: column;
             max-width: 70%;
         }
 
@@ -240,77 +186,161 @@
             align-self: flex-end;
         }
 
-        .message-other {
-            align-self: flex-start;
-        }
-
-        .message-sender {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #3b82f6;
-            margin-bottom: 4px;
-            padding-left: 12px;
-        }
-
         .message-bubble {
             background: white;
-            padding: 10px 16px;
-            border-radius: 20px;
+            padding: 8px 14px;
+            border-radius: 18px;
             border: 1px solid #e2e8f0;
-            word-wrap: break-word;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .my-message .message-bubble {
             background: #3b82f6;
             color: white;
-            border: none;
         }
 
         .message-time {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             color: #94a3b8;
             margin-top: 4px;
-            padding: 0 12px;
+            padding: 0 10px;
         }
 
-        /* Ввод сообщения */
         .chat-input-area {
             padding: 16px 20px;
             border-top: 1px solid #e2e8f0;
             display: flex;
             gap: 12px;
-            background: white;
         }
 
         .chat-input {
             flex: 1;
-            padding: 12px 16px;
+            padding: 10px 16px;
             border: 1px solid #e2e8f0;
             border-radius: 28px;
             outline: none;
-            font-size: 0.95rem;
-        }
-
-        .chat-input:focus {
-            border-color: #3b82f6;
         }
 
         .send-btn {
             background: #3b82f6;
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border-radius: 28px;
             cursor: pointer;
+        }
+
+        /* Правая панель - Рейтинг и достижения */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .rank-card, .achievements-card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .rank-card h3, .achievements-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rank-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .rank-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            background: #f8fafc;
+            border-radius: 16px;
+        }
+
+        .rank-number {
+            width: 30px;
+            height: 30px;
+            background: #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .rank-number.top1 { background: #ffd700; color: #000; }
+        .rank-number.top2 { background: #c0c0c0; color: #000; }
+        .rank-number.top3 { background: #cd7f32; color: #fff; }
+
+        .rank-info {
+            flex: 1;
+        }
+
+        .rank-name {
             font-weight: 600;
+            font-size: 0.9rem;
         }
 
-        .send-btn:hover {
-            background: #2563eb;
+        .rank-stats {
+            font-size: 0.7rem;
+            color: #64748b;
         }
 
-        /* Модальное окно для имени */
+        .rank-score {
+            font-weight: 700;
+            color: #3b82f6;
+        }
+
+        .achievements-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .achievement {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            flex: 1;
+            min-width: 80px;
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+
+        .achievement.unlocked {
+            opacity: 1;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+        }
+
+        .achievement-icon {
+            font-size: 1.8rem;
+        }
+
+        .achievement-name {
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        .achievement-desc {
+            font-size: 0.6rem;
+            color: #64748b;
+        }
+
+        /* Модалка */
         .modal {
             position: fixed;
             top: 0;
@@ -338,7 +368,6 @@
             margin: 20px 0;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
-            font-size: 1rem;
         }
 
         .modal-content button {
@@ -351,17 +380,36 @@
             width: 100%;
         }
 
-        @media (max-width: 768px) {
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #22c55e;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 1000px) {
             .app-container {
-                flex-direction: column;
-                height: 95vh;
+                grid-template-columns: 1fr;
+                height: auto;
             }
-            .sidebar {
-                width: 100%;
-                max-height: 40%;
-            }
-            .message {
-                max-width: 85%;
+            .right-panel {
+                order: 3;
             }
         }
     </style>
@@ -372,8 +420,7 @@
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-        // Supabase конфиг
-           const URL = 'https://hnkltaebpyqsasljixkg.supabase.co';
+        const URL = 'https://hnkltaebpyqsasljixkg.supabase.co';
     // Внимание: используем реальный publishable ключ из условия (он не секретный для клиента)
     const KEY = 'sb_publishable_ZpJ8sXBpfHiel-ymO1rE3A_NTt2Wp-G';
     const supabase = createClient(URL, KEY);
@@ -381,161 +428,213 @@
         let currentUser = null;
         let studyStartTime = null;
         let studyInterval = null;
+        let messageCount = 0;
 
-        // Функции для работы с временем учебы
-        function startStudyTimer(userId) {
-            if (studyInterval) clearInterval(studyInterval);
+        // Достижения и их условия
+        const ACHIEVEMENTS = {
+            early_bird: { name: "🌅 Ранняя пташка", desc: "Зашел до 8:00", icon: "🌅", check: (user) => {
+                const hour = user.first_login_hour || new Date(user.created_at).getHours();
+                return hour < 8;
+            }},
+            marathoner: { name: "🏃 Марафонец", desc: "Проучился >2 часов за раз", icon: "🏃", check: (user) => (user.study_seconds || 0) > 7200 },
+            activist: { name: "💬 Активист", desc: "Написал 20+ сообщений", icon: "💬", check: (user) => (user.messages_count || 0) >= 20 },
+            super_activist: { name: "⭐ Супер-активист", desc: "Написал 50+ сообщений", icon: "⭐", check: (user) => (user.messages_count || 0) >= 50 },
+            hard_worker: { name: "📚 Трудоголик", desc: "Общее время учебы >5 часов", icon: "📚", check: (user) => (user.total_study_seconds || 0) > 18000 },
+            consistent: { name: "🎯 Постоянный", desc: "Учился 7 дней подряд", icon: "🎯", check: (user) => (user.study_days || 0) >= 7 },
+            night_owl: { name: "🦉 Ночная сова", desc: "Учился после 23:00", icon: "🦉", check: (user) => user.has_night_study === true },
+            helper: { name: "🤝 Помощник", desc: "Получил 5 лайков", icon: "🤝", check: (user) => (user.likes_received || 0) >= 5 }
+        };
+
+        // Функция для расчета XP (опыта)
+        function calculateXP(user) {
+            let xp = 0;
+            xp += (user.study_seconds || 0) / 60; // 1 XP за минуту учебы
+            xp += (user.messages_count || 0) * 5; // 5 XP за сообщение
+            xp += (user.likes_received || 0) * 10; // 10 XP за лайк
             
-            studyInterval = setInterval(async () => {
-                if (currentUser && currentUser.status === 'Учёба' && studyStartTime) {
-                    const elapsed = Math.floor((Date.now() - studyStartTime) / 1000);
-                    await supabase
-                        .from('profiles')
-                        .update({ study_seconds: elapsed })
-                        .eq('id', userId);
-                    
-                    // Обновляем отображение у себя
-                    const timerElement = document.getElementById(`timer-${userId}`);
-                    if (timerElement) {
-                        timerElement.textContent = formatTime(elapsed);
-                    }
+            // Бонус за достижения
+            const achievements = user.achievements || [];
+            xp += achievements.length * 50;
+            
+            return Math.floor(xp);
+        }
+
+        // Проверка и выдача достижений
+        async function checkAndAwardAchievements(userId, userData) {
+            const currentAchievements = userData.achievements || [];
+            const newAchievements = [];
+            
+            for (const [key, ach] of Object.entries(ACHIEVEMENTS)) {
+                if (!currentAchievements.includes(key) && ach.check(userData)) {
+                    newAchievements.push(key);
                 }
-            }, 1000);
+            }
+            
+            if (newAchievements.length > 0) {
+                const updatedAchievements = [...currentAchievements, ...newAchievements];
+                await supabase
+                    .from('profiles')
+                    .update({ achievements: updatedAchievements })
+                    .eq('id', userId);
+                
+                // Показываем уведомление о новых достижениях
+                for (const achKey of newAchievements) {
+                    showNotification(`🏆 Новое достижение: ${ACHIEVEMENTS[achKey].name}! ${ACHIEVEMENTS[achKey].desc}`);
+                }
+                
+                return true;
+            }
+            return false;
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
         }
 
         function formatTime(seconds) {
             const hours = Math.floor(seconds / 3600);
             const minutes = Math.floor((seconds % 3600) / 60);
-            const secs = seconds % 60;
-            if (hours > 0) {
-                return `${hours}ч ${minutes}м`;
-            }
-            return `${minutes}м ${secs}с`;
+            if (hours > 0) return `${hours}ч ${minutes}м`;
+            return `${minutes}м`;
         }
 
-        // Отметка о последней активности (онлайн)
-        async function updateOnlineStatus(userId) {
-            await supabase
-                .from('profiles')
-                .update({ last_seen: new Date().toISOString() })
-                .eq('id', userId);
-        }
-
-        // Периодическое обновление онлайна
-        function startOnlinePing(userId) {
-            updateOnlineStatus(userId);
-            setInterval(() => updateOnlineStatus(userId), 30000);
-        }
-
-        // Проверка кто онлайн (был активен в последние 2 минуты)
         function isOnline(lastSeen) {
             if (!lastSeen) return false;
-            const last = new Date(lastSeen);
-            const now = new Date();
-            return (now - last) < 120000; // 2 минуты
+            return (new Date() - new Date(lastSeen)) < 120000;
         }
 
-        // Отправка сообщения
+        async function updateOnlineStatus(userId) {
+            await supabase.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', userId);
+        }
+
         async function sendMessage(text) {
             if (!text.trim() || !currentUser) return;
             
+            await supabase.from('messages').insert({
+                user_id: currentUser.id,
+                username: currentUser.username,
+                message: text,
+                created_at: new Date().toISOString()
+            });
+            
+            // Увеличиваем счетчик сообщений
+            messageCount++;
             await supabase
-                .from('messages')
-                .insert({
-                    user_id: currentUser.id,
-                    username: currentUser.username,
-                    message: text,
-                    created_at: new Date().toISOString()
-                });
+                .from('profiles')
+                .update({ messages_count: messageCount })
+                .eq('id', currentUser.id);
+            
+            currentUser.messages_count = messageCount;
+            await checkAndAwardAchievements(currentUser.id, currentUser);
         }
 
-        // Загрузка сообщений
         async function loadMessages() {
-            const { data: messages, error } = await supabase
+            const { data: messages } = await supabase
                 .from('messages')
                 .select('*')
                 .order('created_at', { ascending: true })
                 .limit(100);
             
-            if (error) return;
-            
             const container = document.getElementById('messagesContainer');
-            if (!container) return;
+            if (!container || !messages) return;
             
             container.innerHTML = messages.map(msg => {
                 const isMy = msg.user_id === currentUser?.id;
                 const time = new Date(msg.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                
                 return `
-                    <div class="message ${isMy ? 'my-message' : 'message-other'}">
-                        <div class="message-sender">${escapeHtml(msg.username)}</div>
-                        <div class="message-bubble">${escapeHtml(msg.message)}</div>
+                    <div class="message ${isMy ? 'my-message' : ''}">
+                        <div class="message-bubble">
+                            <small style="font-size:0.7rem; opacity:0.7">${escapeHtml(msg.username)}</small><br>
+                            ${escapeHtml(msg.message)}
+                        </div>
                         <div class="message-time">${time}</div>
                     </div>
                 `;
             }).join('');
-            
-            // Скролл вниз
             container.scrollTop = container.scrollHeight;
         }
 
-        // Загрузка списка пользователей
         async function loadUsers() {
-            const { data: users, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .order('username');
-            
-            if (error) return;
+            const { data: users } = await supabase.from('profiles').select('*').order('total_study_seconds', { ascending: false });
+            if (!users) return;
             
             const onlineUsers = users.filter(u => isOnline(u.last_seen));
-            const onlineCount = onlineUsers.length;
+            document.getElementById('onlineCount').innerHTML = `🟢 ${onlineUsers.length} онлайн`;
             
+            // Рендер списка пользователей
             const container = document.getElementById('usersList');
-            const onlineSpan = document.getElementById('onlineCount');
-            
-            if (onlineSpan) onlineSpan.textContent = `${onlineCount} онлайн`;
-            
-            if (container) {
-                container.innerHTML = users.map(user => {
-                    const online = isOnline(user.last_seen);
-                    const studyTime = user.study_seconds || 0;
-                    const isCurrentUser = user.id === currentUser?.id;
-                    
-                    return `
-                        <div class="user-card ${online ? 'online' : ''}">
-                            <div class="user-avatar">
-                                ${user.username.charAt(0).toUpperCase()}
+            container.innerHTML = users.map(user => {
+                const online = isOnline(user.last_seen);
+                const studyTime = user.study_seconds || 0;
+                return `
+                    <div class="user-card ${online ? 'online' : ''}" style="display: flex; gap: 10px; align-items: center;">
+                        <div class="user-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                        <div class="user-info">
+                            <div class="user-name">
+                                ${escapeHtml(user.username)}
+                                ${online ? '<span class="online-dot"></span>' : '⚫'}
+                                ${user.id === currentUser?.id ? ' <span style="font-size:0.65rem; background:#dbeafe; padding:2px 6px; border-radius:10px;">Вы</span>' : ''}
                             </div>
-                            <div class="user-info">
-                                <div class="user-name">
-                                    ${escapeHtml(user.username)}
-                                    ${online ? '<span class="online-dot"></span>' : '<span class="offline-dot"></span>'}
-                                    ${isCurrentUser ? '<span style="font-size: 0.7rem; background: #dbeafe; padding: 2px 8px; border-radius: 12px;">Вы</span>' : ''}
-                                </div>
-                                <div class="user-status">
-                                    ${user.status || 'Нет статуса'}
-                                    ${user.status === 'Учёба' ? `<div class="study-timer" id="timer-${user.id}">${formatTime(studyTime)}</div>` : ''}
-                                </div>
-                            </div>
-                            ${!isCurrentUser && user.status === 'Учёба' ? '<div style="font-size: 0.7rem;">📚 учеба</div>' : ''}
+                            <div class="user-status">${user.status || 'Онлайн'}</div>
+                            ${user.status === 'Учёба' ? `<div class="study-timer">📚 ${formatTime(studyTime)}</div>` : ''}
                         </div>
-                    `;
-                }).join('');
-            }
+                    </div>
+                `;
+            }).join('');
             
-            // Обновляем таймеры для всех
-            users.forEach(user => {
-                if (user.status === 'Учёба') {
-                    const timerEl = document.getElementById(`timer-${user.id}`);
-                    if (timerEl) {
-                        timerEl.textContent = formatTime(user.study_seconds || 0);
-                    }
+            // Рендер рейтинга
+            const topUsers = [...users].sort((a, b) => calculateXP(b) - calculateXP(a)).slice(0, 10);
+            const rankList = document.getElementById('rankList');
+            rankList.innerHTML = topUsers.map((user, idx) => {
+                const xp = calculateXP(user);
+                return `
+                    <div class="rank-item">
+                        <div class="rank-number ${idx === 0 ? 'top1' : idx === 1 ? 'top2' : idx === 2 ? 'top3' : ''}">${idx + 1}</div>
+                        <div class="rank-info">
+                            <div class="rank-name">${escapeHtml(user.username)}</div>
+                            <div class="rank-stats">📚 ${formatTime(user.total_study_seconds || 0)} · 💬 ${user.messages_count || 0}</div>
+                        </div>
+                        <div class="rank-score">${xp} XP</div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Рендер достижений текущего пользователя
+            if (currentUser) {
+                const userData = users.find(u => u.id === currentUser.id);
+                if (userData) {
+                    currentUser = userData;
+                    const achievements = userData.achievements || [];
+                    const achievementsContainer = document.getElementById('achievementsList');
+                    achievementsContainer.innerHTML = Object.entries(ACHIEVEMENTS).map(([key, ach]) => {
+                        const unlocked = achievements.includes(key);
+                        return `
+                            <div class="achievement ${unlocked ? 'unlocked' : ''}">
+                                <div class="achievement-icon">${ach.icon}</div>
+                                <div class="achievement-name">${ach.name}</div>
+                                <div class="achievement-desc">${ach.desc}</div>
+                            </div>
+                        `;
+                    }).join('');
                 }
-            });
+            }
         }
 
-        // Изменение статуса
+        async function startStudyTimer(userId) {
+            if (studyInterval) clearInterval(studyInterval);
+            studyInterval = setInterval(async () => {
+                if (currentUser && currentUser.status === 'Учёба' && studyStartTime) {
+                    const elapsed = Math.floor((Date.now() - studyStartTime) / 1000);
+                    await supabase.from('profiles').update({ study_seconds: elapsed }).eq('id', userId);
+                    await checkAndAwardAchievements(userId, { ...currentUser, study_seconds: elapsed });
+                }
+            }, 1000);
+        }
+
         async function changeStatus(status) {
             if (!currentUser) return;
             
@@ -545,46 +644,59 @@
                 studyStartTime = Date.now();
                 updates.study_seconds = 0;
                 startStudyTimer(currentUser.id);
-            } else if (status === 'Перерыв' || status === 'Выход') {
+                showNotification('📚 Начинаем учёбу! Удачи!');
+            } else if (status === 'Перерыв') {
                 if (studyInterval) clearInterval(studyInterval);
+                if (currentUser.study_seconds > 0) {
+                    const total = (currentUser.total_study_seconds || 0) + currentUser.study_seconds;
+                    await supabase.from('profiles').update({ total_study_seconds: total, study_seconds: 0 }).eq('id', currentUser.id);
+                    currentUser.total_study_seconds = total;
+                }
                 studyStartTime = null;
+                showNotification('☕ Перерыв! Отдохните немного');
+            } else if (status === 'Выход') {
+                if (studyInterval) clearInterval(studyInterval);
+                if (currentUser.study_seconds > 0) {
+                    const total = (currentUser.total_study_seconds || 0) + currentUser.study_seconds;
+                    await supabase.from('profiles').update({ total_study_seconds: total, study_seconds: 0 }).eq('id', currentUser.id);
+                }
+                showNotification('👋 До встречи!');
             }
             
-            await supabase
-                .from('profiles')
-                .update(updates)
-                .eq('id', currentUser.id);
-            
-            // Обновляем локально
+            await supabase.from('profiles').update(updates).eq('id', currentUser.id);
             currentUser.status = status;
             await loadUsers();
         }
 
-        // Инициализация/вход
         async function initUser(username) {
-            // Проверяем или создаем пользователя
-            const { data: existing } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('username', username)
-                .maybeSingle();
+            const { data: existing } = await supabase.from('profiles').select('*').eq('username', username).maybeSingle();
+            const now = new Date();
+            const currentHour = now.getHours();
             
             if (existing) {
                 currentUser = existing;
-                await supabase
-                    .from('profiles')
-                    .update({ last_seen: new Date().toISOString() })
-                    .eq('id', currentUser.id);
+                await supabase.from('profiles').update({ last_seen: now.toISOString() }).eq('id', currentUser.id);
             } else {
                 const newUser = {
                     id: crypto.randomUUID(),
                     username: username,
                     status: 'Онлайн',
                     study_seconds: 0,
-                    last_seen: new Date().toISOString()
+                    total_study_seconds: 0,
+                    messages_count: 0,
+                    achievements: [],
+                    first_login_hour: currentHour,
+                    last_seen: now.toISOString(),
+                    created_at: now.toISOString()
                 };
                 await supabase.from('profiles').insert(newUser);
                 currentUser = newUser;
+                
+                // Проверка на "Раннюю пташку"
+                if (currentHour < 8) {
+                    showNotification('🌅 Вы получили достижение "Ранняя пташка"!');
+                    await checkAndAwardAchievements(currentUser.id, currentUser);
+                }
             }
             
             if (currentUser.status === 'Учёба') {
@@ -592,129 +704,94 @@
                 startStudyTimer(currentUser.id);
             }
             
-            startOnlinePing(currentUser.id);
+            setInterval(() => updateOnlineStatus(currentUser.id), 30000);
             renderMainApp();
-            loadUsers();
-            loadMessages();
+            await loadUsers();
+            await loadMessages();
             
-            // Подписка на изменения в реальном времени
-            supabase
-                .channel('profiles-changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => loadUsers())
-                .subscribe();
+            // Подписки
+            supabase.channel('profiles-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => loadUsers()).subscribe();
+            supabase.channel('messages-changes').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => loadMessages()).subscribe();
             
-            supabase
-                .channel('messages-changes')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => loadMessages())
-                .subscribe();
-            
-            // Обновление каждые 5 секунд
-            setInterval(() => {
-                loadUsers();
-                if (currentUser?.status === 'Учёба') {
-                    updateOnlineStatus(currentUser.id);
-                }
+            setInterval(async () => {
+                await loadUsers();
+                if (currentUser?.status === 'Учёба') await updateOnlineStatus(currentUser.id);
             }, 5000);
         }
 
-        // Рендер главного приложения
         function renderMainApp() {
             const root = document.getElementById('root');
             root.innerHTML = `
                 <div class="app-container">
-                    <!-- Левая панель -->
                     <div class="sidebar">
                         <div class="sidebar-header">
-                            <h2>
-                                📡 Монитор группы
-                                <span class="online-count" id="onlineCount">0 онлайн</span>
-                            </h2>
+                            <h2>📡 Монитор группы <span class="online-count" id="onlineCount">0 онлайн</span></h2>
                         </div>
-                        <div class="users-list" id="usersList">
-                            <div style="text-align: center; padding: 20px;">Загрузка...</div>
+                        <div class="users-list" id="usersList">Загрузка...</div>
+                    </div>
+                    
+                    <div class="chat-area">
+                        <div class="chat-header">
+                            <div class="my-controls">
+                                <div class="status-badge" data-status="Учёба">📚 Учёба</div>
+                                <div class="status-badge" data-status="Перерыв">☕ Перерыв</div>
+                                <div class="status-badge" data-status="Выход">🚪 Выход</div>
+                            </div>
+                        </div>
+                        <div class="messages-container" id="messagesContainer">Загрузка...</div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" id="messageInput" placeholder="Сообщение...">
+                            <button class="send-btn" id="sendBtn">📤 Отправить</button>
                         </div>
                     </div>
                     
-                    <!-- Правая панель - Чат -->
-                    <div class="chat-area">
-                        <div class="chat-header">
-                            <h3>💬 Общий чат</h3>
-                            <div class="my-controls">
-                                <div class="status-buttons" id="statusButtons">
-                                    <button class="status-badge" data-status="Учёба">📚 Учёба</button>
-                                    <button class="status-badge" data-status="Перерыв">☕ Перерыв</button>
-                                    <button class="status-badge" data-status="Выход">🚪 Выход</button>
-                                </div>
-                                <button class="logout-btn" id="logoutBtn">Завершить сессию</button>
-                            </div>
+                    <div class="right-panel">
+                        <div class="rank-card">
+                            <h3>🏆 Топ студентов</h3>
+                            <div class="rank-list" id="rankList">Загрузка...</div>
                         </div>
-                        
-                        <div class="messages-container" id="messagesContainer">
-                            <div style="text-align: center; padding: 20px;">Загрузка сообщений...</div>
-                        </div>
-                        
-                        <div class="chat-input-area">
-                            <input type="text" class="chat-input" id="messageInput" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') window.dispatchEvent(new Event('sendMessage'))">
-                            <button class="send-btn" id="sendBtn">Отправить</button>
+                        <div class="achievements-card">
+                            <h3>🎖️ Мои достижения</h3>
+                            <div class="achievements-grid" id="achievementsList">Загрузка...</div>
                         </div>
                     </div>
                 </div>
             `;
             
-            // Кнопки статусов
             document.querySelectorAll('.status-badge').forEach(btn => {
                 btn.addEventListener('click', () => changeStatus(btn.getAttribute('data-status')));
-                if (currentUser.status === btn.getAttribute('data-status')) {
-                    btn.classList.add('active');
-                }
+                if (currentUser.status === btn.getAttribute('data-status')) btn.classList.add('active');
             });
             
-            // Отправка сообщения
-            const sendBtn = document.getElementById('sendBtn');
-            const messageInput = document.getElementById('messageInput');
-            
-            const send = () => {
-                if (messageInput.value.trim()) {
-                    sendMessage(messageInput.value);
-                    messageInput.value = '';
+            document.getElementById('sendBtn').onclick = () => {
+                const input = document.getElementById('messageInput');
+                if (input.value.trim()) {
+                    sendMessage(input.value);
+                    input.value = '';
                 }
             };
-            
-            sendBtn.onclick = send;
-            messageInput.onkeypress = (e) => {
-                if (e.key === 'Enter') send();
-            };
-            
-            document.getElementById('logoutBtn').onclick = async () => {
-                if (studyInterval) clearInterval(studyInterval);
-                await supabase.auth?.signOut();
-                location.reload();
+            document.getElementById('messageInput').onkeypress = (e) => {
+                if (e.key === 'Enter') document.getElementById('sendBtn').click();
             };
         }
         
-        // Модалка для ввода имени
         function showNameModal() {
             const root = document.getElementById('root');
             root.innerHTML = `
                 <div class="modal">
                     <div class="modal-content">
-                        <h2>👋 Добро пожаловать!</h2>
-                        <p>Введите ваше имя для входа в группу</p>
+                        <h2>🎓 Добро пожаловать в StudyHub!</h2>
+                        <p>Введите ваше имя для входа</p>
                         <input type="text" id="usernameInput" placeholder="Ваше имя" maxlength="30">
-                        <button id="startBtn">Начать</button>
+                        <button id="startBtn">Начать учиться</button>
                     </div>
                 </div>
             `;
-            
             document.getElementById('startBtn').onclick = () => {
                 const name = document.getElementById('usernameInput').value.trim();
-                if (name) {
-                    initUser(name);
-                } else {
-                    alert('Введите имя!');
-                }
+                if (name) initUser(name);
+                else alert('Введите имя!');
             };
-            
             document.getElementById('usernameInput').onkeypress = (e) => {
                 if (e.key === 'Enter') document.getElementById('startBtn').click();
             };
@@ -722,15 +799,9 @@
         
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/[&<>]/g, (m) => {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
+            return str.replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
         }
         
-        // Запуск
         showNameModal();
     </script>
 </body>
