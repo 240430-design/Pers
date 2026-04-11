@@ -442,7 +442,7 @@
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-          const URL = 'https://hnkltaebpyqsasljixkg.supabase.co';
+        const URL = 'https://hnkltaebpyqsasljixkg.supabase.co';
     // Внимание: используем реальный publishable ключ из условия (он не секретный для клиента)
     const KEY = 'sb_publishable_ZpJ8sXBpfHiel-ymO1rE3A_NTt2Wp-G';
     const supabase = createClient(URL, KEY);
@@ -997,4 +997,58 @@
                         </div>
                     </div>
                 </div>
-           
+            `;
+            
+            document.querySelectorAll('.status-badge').forEach(btn => {
+                btn.addEventListener('click', () => changeStatus(btn.getAttribute('data-status')));
+                if (currentUser.status === btn.getAttribute('data-status')) btn.classList.add('active');
+            });
+            
+            document.getElementById('sendBtn').onclick = () => {
+                const input = document.getElementById('messageInput');
+                if (input.value.trim()) {
+                    sendMessage(input.value);
+                    input.value = '';
+                }
+            };
+            document.getElementById('messageInput').onkeypress = (e) => {
+                if (e.key === 'Enter') document.getElementById('sendBtn').click();
+            };
+        }
+        
+        // Глобальная функция для лайков (чтобы работало из onclick)
+        window.sendLikeToUser = async (userId) => {
+            await sendLike(userId);
+        };
+        
+        function showNameModal() {
+            const root = document.getElementById('root');
+            root.innerHTML = `
+                <div class="modal">
+                    <div class="modal-content">
+                        <h2>🎓 Добро пожаловать в StudyHub!</h2>
+                        <p>Введите ваше имя для входа</p>
+                        <input type="text" id="usernameInput" placeholder="Ваше имя" maxlength="30">
+                        <button id="startBtn">Начать учиться</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('startBtn').onclick = () => {
+                const name = document.getElementById('usernameInput').value.trim();
+                if (name) initUser(name);
+                else alert('Введите имя!');
+            };
+            document.getElementById('usernameInput').onkeypress = (e) => {
+                if (e.key === 'Enter') document.getElementById('startBtn').click();
+            };
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+        }
+        
+        showNameModal();
+    </script>
+</body>
+</html>
