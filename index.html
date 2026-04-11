@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Монитор группы</title>
+    <title>Монитор группы — Вход через Google</title>
     <style>
         * {
             margin: 0;
@@ -81,6 +81,10 @@
             padding: 20px 28px 0 28px;
         }
 
+        .profile-header h2 {
+            font-size: 1.5rem;
+        }
+
         .status-grid {
             display: flex;
             flex-wrap: wrap;
@@ -113,6 +117,16 @@
             font-size: 1.3rem;
             font-weight: 600;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .member-count {
+            font-size: 0.9rem;
+            background: #eef2ff;
+            padding: 2px 12px;
+            border-radius: 20px;
         }
 
         .user-list {
@@ -136,6 +150,10 @@
             width: 14px;
             height: 14px;
             border-radius: 14px;
+        }
+
+        .user-info {
+            flex: 1;
         }
 
         .user-name {
@@ -166,13 +184,12 @@
             color: #666;
         }
 
-        .error-msg {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 12px;
-            margin: 20px;
-            border-radius: 12px;
-            font-size: 14px;
+        .you-badge {
+            font-size: 0.7rem;
+            background: #e2f0ff;
+            padding: 2px 8px;
+            border-radius: 40px;
+            margin-left: 8px;
         }
     </style>
 </head>
@@ -184,13 +201,12 @@
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-        // Конфигурация Supabase
-           const URL = 'https://hnkltaebpyqsasljixkg.supabase.co';
+        // ВАШИ ПРАВИЛЬНЫЕ ДАННЫЕ
+          const URL = 'https://hnkltaebpyqsasljixkg.supabase.co';
     // Внимание: используем реальный publishable ключ из условия (он не секретный для клиента)
     const KEY = 'sb_publishable_ZpJ8sXBpfHiel-ymO1rE3A_NTt2Wp-G';
     const supabase = createClient(URL, KEY);
 
-        // Функция для получения цвета статуса
         function getStatusColor(status) {
             if (!status) return '#9ca3af';
             if (status === 'Учёба') return '#3b82f6';
@@ -200,12 +216,10 @@
             return '#9ca3af';
         }
 
-        // Получить текущий полный URL (без hash)
         function getCurrentUrl() {
             return window.location.origin + window.location.pathname;
         }
 
-        // Страница входа
         function renderLogin() {
             const root = document.getElementById('root');
             root.innerHTML = `
@@ -222,7 +236,7 @@
                         Войти через Google
                     </button>
                     <p style="margin-top: 24px; font-size: 12px; color: #999;">
-                        🔐 Вы вернетесь на: ${getCurrentUrl()}
+                        🔐 После входа вы вернетесь сюда
                     </p>
                 </div>
             `;
@@ -242,7 +256,6 @@
             };
         }
 
-        // Основное приложение
         function renderApp(user) {
             const root = document.getElementById('root');
             root.innerHTML = `
@@ -260,7 +273,7 @@
                 <div class="group-section">
                     <div class="group-title">
                         📡 Монитор группы
-                        <span id="memberCount" style="font-size: 0.9rem; background: #eef2ff; padding: 2px 12px; border-radius: 20px; margin-left: 10px;">0</span>
+                        <span class="member-count" id="memberCount">0</span>
                     </div>
                     <div id="userList" class="user-list">
                         <div class="loading">Загрузка...</div>
@@ -268,13 +281,11 @@
                 </div>
             `;
             
-            // Кнопка выхода
             document.getElementById('logoutBtn').onclick = async () => {
                 await supabase.auth.signOut();
                 window.location.reload();
             };
             
-            // Кнопки статусов
             document.querySelectorAll('.status-btn').forEach(btn => {
                 btn.onclick = async () => {
                     const status = btn.getAttribute('data-status');
@@ -290,7 +301,6 @@
             setInterval(() => loadUsers(user.id), 5000);
         }
 
-        // Загрузка списка пользователей
         async function loadUsers(currentUserId) {
             const { data: users, error } = await supabase
                 .from('profiles')
@@ -302,14 +312,12 @@
                 return;
             }
             
-            // Обновляем информацию о себе
-            const me = users.find(u => u.id === currentUserId);
+            const me = users?.find(u => u.id === currentUserId);
             const myInfoDiv = document.getElementById('myInfo');
             if (myInfoDiv && me) {
-                myInfoDiv.innerHTML = `✅ <strong>${escapeHtml(me.username)}</strong> · текущий статус: <span style="background: #eef2ff; padding: 2px 10px; border-radius: 20px;">${escapeHtml(me.status || 'не задан')}</span>`;
+                myInfoDiv.innerHTML = `✅ <strong>${escapeHtml(me.username)}</strong> · статус: <span style="background: #eef2ff; padding: 2px 10px; border-radius: 20px;">${escapeHtml(me.status || 'не задан')}</span>`;
             }
             
-            // Обновляем список
             const listDiv = document.getElementById('userList');
             if (listDiv) {
                 if (!users || users.length === 0) {
@@ -322,11 +330,11 @@
                         
                         return `
                             <div class="user-item">
-                                <div class="status-dot" style="background: ${color}; width: 14px; height: 14px; border-radius: 14px;"></div>
+                                <div class="status-dot" style="background: ${color};"></div>
                                 <div class="user-info">
                                     <div class="user-name">
                                         ${escapeHtml(user.username)}
-                                        ${isMe ? ' <span style="font-size: 0.7rem; background: #e2f0ff; padding: 2px 8px; border-radius: 40px;">вы</span>' : ''}
+                                        ${isMe ? '<span class="you-badge">вы</span>' : ''}
                                     </div>
                                     <div class="user-status-text">${escapeHtml(statusText)}</div>
                                 </div>
@@ -334,11 +342,11 @@
                         `;
                     }).join('');
                 }
-                document.getElementById('memberCount').innerText = `${users.length} уч.`;
+                const count = document.getElementById('memberCount');
+                if (count) count.innerText = `${users?.length || 0} уч.`;
             }
         }
 
-        // Создание профиля если нет
         async function createProfileIfNeeded(user) {
             const { data: existing } = await supabase
                 .from('profiles')
@@ -349,7 +357,8 @@
             if (!existing) {
                 const username = user.user_metadata?.full_name || 
                                 user.user_metadata?.name ||
-                                user.email.split('@')[0];
+                                user.email?.split('@')[0] ||
+                                'Пользователь';
                 
                 await supabase.from('profiles').insert({
                     id: user.id,
@@ -370,7 +379,6 @@
             });
         }
 
-        // Обработка возврата от Google (токены в URL)
         async function handleOAuthRedirect() {
             const hash = window.location.hash;
             if (hash && hash.includes('access_token')) {
@@ -387,12 +395,9 @@
             return false;
         }
 
-        // Главная функция
         async function init() {
-            // Обрабатываем редирект от Google
             await handleOAuthRedirect();
             
-            // Проверяем сессию
             const { data: { session } } = await supabase.auth.getSession();
             
             if (session) {
